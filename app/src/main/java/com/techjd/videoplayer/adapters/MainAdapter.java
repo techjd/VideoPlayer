@@ -2,6 +2,7 @@ package com.techjd.videoplayer.adapters;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,7 +28,10 @@ import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.util.EventLogger;
+import com.google.android.exoplayer2.util.Util;
 import com.techjd.videoplayer.R;
 import com.techjd.videoplayer.models.Msg;
 import com.techjd.videoplayer.utils.CacheDataSourceFactory;
@@ -40,11 +44,12 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainAdapterVie
 
     private List<Msg> videosList;
     private Context context;
+    private SimpleExoPlayer simpleExoPlayer;
 
-
-    public MainAdapter(List<Msg> videosList, Context context) {
+    public MainAdapter(List<Msg> videosList, Context context,SimpleExoPlayer simpleExoPlayer) {
         this.videosList = videosList;
         this.context = context;
+        this.simpleExoPlayer = simpleExoPlayer;
 
     }
 
@@ -61,12 +66,14 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainAdapterVie
     public void onBindViewHolder(@NonNull MainAdapterViewHolder holder, int position) {
         Msg msg = videosList.get(position);
         Uri uri = Uri.parse(msg.getVideo());
-
+        Log.d("URL", msg.getVideo());
         MediaItem mediaItem = MediaItem.fromUri(uri);
         holder.simpleExoPlayer = new SimpleExoPlayer.Builder(context).build();
         holder.playerView.setPlayer(holder.simpleExoPlayer);
         holder.simpleExoPlayer.setRepeatMode(Player.REPEAT_MODE_ALL);
 
+//        DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(context, Util.getUserAgent(context, "VideoPlayer"));
+//        ExtractorMediaSource extractorMediaSource = new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(msg.getVideo()));
 
 //        DataSource.Factory dataSourceFactory = new DefaultHttpDataSourceFactory();
 //        MediaSource mediaSource = new ProgressiveMediaSource.Factory(dataSourceFactory)
@@ -76,7 +83,10 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainAdapterVie
 //        holder.simpleExoPlayer.setPlayWhenReady(true);
 //        holder.simpleExoPlayer.setMediaSource(mediaSource);
         holder.simpleExoPlayer.setMediaItem(mediaItem);
+        Log.d("URI", Uri.parse(msg.getVideo()).toString());
+        holder.simpleExoPlayer.addAnalyticsListener(new EventLogger(null));
         holder.simpleExoPlayer.prepare();
+
 
 
         holder.firstName.setText(msg.getUserInfo().getFirstName());
@@ -102,8 +112,18 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainAdapterVie
     public void onViewRecycled(@NonNull MainAdapterViewHolder holder) {
         super.onViewRecycled(holder);
 //        holder.simpleExoPlayer.pause();
-        holder.pausePlayer();
+//        holder.pausePlayer();
+          holder.releasePlayer();
+    }
 
+    @Override
+    public long getItemId(int position) {
+        return super.getItemId(position);
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return super.getItemViewType(position);
     }
 
     @Override
@@ -118,7 +138,6 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainAdapterVie
         super.onViewDetachedFromWindow(holder);
 //        holder.simpleExoPlayer.pause();
         holder.pausePlayer();
-
 
     }
 
@@ -161,7 +180,8 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainAdapterVie
         public void releasePlayer() {
             simpleExoPlayer.setPlayWhenReady(false);
             simpleExoPlayer.release();
-            simpleExoPlayer.stop(true);
+            simpleExoPlayer.seekTo(0);
+            simpleExoPlayer.stop();
         }
     }
 }

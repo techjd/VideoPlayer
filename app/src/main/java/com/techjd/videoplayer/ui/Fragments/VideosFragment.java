@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.viewpager.widget.ViewPager;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.util.Log;
@@ -13,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.techjd.videoplayer.R;
 import com.techjd.videoplayer.adapters.MainAdapter;
 import com.techjd.videoplayer.api.APIService;
@@ -25,11 +27,13 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 
-public class VideosFragment extends Fragment {
+public class VideosFragment extends Fragment{
     private ViewPager2 videos;
     private APIService apiService;
     private MainAdapter mainAdapter;
-
+    private MainAdapter.MainAdapterViewHolder mainAdapterViewHolder;
+    private SimpleExoPlayer simpleExoPlayer;
+    private int mPlayerCurrentPosition;
 
     public VideosFragment() {
         // Required empty public constructor
@@ -55,6 +59,8 @@ public class VideosFragment extends Fragment {
 
         videos = view.findViewById(R.id.videoPager);
 
+        simpleExoPlayer = new SimpleExoPlayer.Builder(getContext()).build();
+
         BodyCredentials bodyCredentials = new BodyCredentials(
                 "0",
                 "eynBsaVYwIE:APA91bEmLkA0mold83uPz1N570IZjPGwAUE_o93EkDCPjSZ5-sQRxKRRwAEsSpiGvEOFMq06XQxrCx0k1Kbh8GVjYr3OmDjSGikCiJCReVGsM4-hHvPWgYMOaFrP-9HaO1JfWDg7PgZV",
@@ -69,7 +75,7 @@ public class VideosFragment extends Fragment {
             public void onResponse(Call<Videos> call, Response<Videos> response) {
                 if (response.isSuccessful()) {
 
-                    videos.setAdapter(new MainAdapter(response.body().getMsg(), getContext()));
+                    videos.setAdapter(new MainAdapter(response.body().getMsg(), getContext(), simpleExoPlayer));
                 }
             }
 
@@ -80,9 +86,43 @@ public class VideosFragment extends Fragment {
         });
 
 
+        videos.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                super.onPageScrolled(position, positionOffset, positionOffsetPixels);
+                Toast.makeText(getContext(), "Page Scrolled", Toast.LENGTH_SHORT).show();
 
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                Toast.makeText(getContext(), position + "Page Selected", Toast.LENGTH_SHORT).show();
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                super.onPageScrollStateChanged(state);
+                Toast.makeText(getContext(), "State Of Page Selected", Toast.LENGTH_SHORT).show();
+//                simpleExoPlayer.setPlayWhenReady(false);
+//                simpleExoPlayer.getPlaybackState();
+            }
+        });
 
     }
 
 
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
 }
